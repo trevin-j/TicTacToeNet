@@ -1,11 +1,13 @@
 from game.player import Player
 import debug.inputter as inputter
+from lan.multiplayer_game import MultiplayerGame
+from globals import MULTIPLAYER_PORT
+import random
+from cls import cls
 
-class Board:
-    LOCAL = 0
-    LAN = 1
+class Board(MultiplayerGame):
 
-    def __init__(self, mode=LOCAL) -> None:
+    def __init__(self, mode=MultiplayerGame.LOCAL) -> None:
         self.grid = [[' ' for _ in range(3)] for _ in range(3)]
         self.winner = None
         self.mode = mode
@@ -18,8 +20,56 @@ class Board:
 
         self.turn = self.player_x
 
+        if mode == MultiplayerGame.LAN:
+            self._port = MULTIPLAYER_PORT
+            self._setup_lan()
+
+    
+    def _determine_player_roles(self):
+        local_role = random.choice(('x', 'o'))
+        if local_role == 'x':
+            self.player_x.set_mode(MultiplayerGame.LOCAL)
+            self.player_o.set_mode(MultiplayerGame.LAN)
+        else:
+            self.player_x.set_mode(MultiplayerGame.LAN)
+            self.player_o.set_mode(MultiplayerGame.LOCAL)
+
+        self.send_to_peer(local_role)
+        
+
+    def _retrieve_role(self) -> None:
+        role = self.receive_from_peer()
+        if role == 'x':
+            self.player_x.set_mode(MultiplayerGame.LAN)
+            self.player_o.set_mode(MultiplayerGame.LOCAL)
+        else:
+            self.player_x.set_mode(MultiplayerGame.LOCAL)
+            self.player_o.set_mode(MultiplayerGame.LAN)
+
+
+
+    def _setup_lan(self) -> None:
+        print('Searching for existing games...')
+
+        hosts = self.search_for_hosts()
+        if len(hosts) > 0:
+            print('Found game. Connecting...')
+            self.connect_to_host(hosts[0])
+            print('Connected. Determining roles...')
+            self._retrieve_role()
+            return
+        
+        print('No existing games found. Creating new game...')
+        self.create_host()
+    
+        print('Waiting for client...')
+        self.wait_and_connect_client()
+        print('Connected. Determining roles...')
+        self._determine_player_roles()
+
 
     def print(self) -> None:
+        cls()
         for i in range(3):
             for k in range(3):
                 print(' ' + self.grid[i][k], end=' ')
@@ -32,10 +82,16 @@ class Board:
 
 
     def next_turn(self) -> None:
-        if self.turn.mode == Board.LOCAL:
+        if self.turn.mode == MultiplayerGame.LOCAL:
             self._next_turn_local()
-        elif self.turn.mode == Board.LAN:
+        elif self.turn.mode == MultiplayerGame.LAN:
             self._next_turn_lan()
+
+        self.cat = True
+        for i in range(3):
+            for k in range(3):
+                if self.grid[i][k] == ' ':
+                    self.cat = False
 
 
     def _switch_turn(self) -> None:
@@ -61,6 +117,9 @@ class Board:
                 print('Invalid input')
             except IndexError:
                 print('Invalid move')
+
+        if self.mode == MultiplayerGame.LAN:
+            self.send_to_peer(f'{row},{col}')
 
         if self.check_winner():
             self.print_winner()
@@ -90,4 +149,16 @@ class Board:
         return False
 
     def _next_turn_lan(self) -> None:
-        pass
+        print(f'{self.turn.symbol}\'s turn')
+        print('Waiting on opponent...')
+
+        opponent_turn = self.receive_from_peer()
+        opponent_turn = opponent_turn.split(',')
+        row = int(opponent_turn[0])
+        col = int(opponent_turn[1])
+        self.grid[row][col] = self.turn.symbol
+
+        if self.check_winner():
+            self.print_winner()
+
+        self._switch_turn()
