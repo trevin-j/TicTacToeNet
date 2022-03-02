@@ -1,5 +1,5 @@
-from player import Player
-import inputter
+from game.player import Player
+import debug.inputter as inputter
 
 class Board:
     LOCAL = 0

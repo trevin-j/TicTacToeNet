@@ -1,5 +1,5 @@
-from board import Board
-import inputter
+from game.board import Board
+import debug.inputter as inputter
 
 TEST_MODE = True
 if TEST_MODE:
