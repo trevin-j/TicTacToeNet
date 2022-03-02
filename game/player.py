@@ -11,3 +11,6 @@ class Player:
 
     def set_as_o(self) -> None:
         self.symbol = 'O'
+
+    def set_mode(self, mode) -> None:
+        self.mode = mode
