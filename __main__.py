@@ -1,12 +1,4 @@
 from game.board import Board
-import debug.inputter as inputter
-
-TEST_MODE = False
-if TEST_MODE:
-    inputter.set_test_file('test_input.txt')
-    inputter.set_mode(inputter.TEST_MODE)
-
-
 
 def main():
     board = Board(Board.LAN)

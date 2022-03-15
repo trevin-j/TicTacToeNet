@@ -2,11 +2,8 @@
 import socket
 import time
 
-# Modules from same directory as main script
+# Package modules
 from globals import dlogger
-from debug.dlogger import dLog
-
-# Modules relative to this file
 from lan.connection import Connection
 
 class BroadcastResponder(Connection):
@@ -67,22 +64,16 @@ class BroadcastResponder(Connection):
         self._sender_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         dlogger.log_info('Broadcast socket set.')
 
-        # Set timeout to be very very small
-        # self._socket.settimeout(0.01)
-
 
     def respond_to_broadcast(self, message='') -> bool:
         '''
         Listens for a very short period of time for a broadcast message.
         If a broadcast message is received, the message is sent back to the sender.
-        This may be used during game, so that the game can be joined.
-        This means the timeout MUST be set to a very short time.
         First message structure: 'PYMULT_SERVER_RESPONSE(1--)'
         The second message contains a message the number of bytes in length as shown in the first message.
         The response message is sent on port + 1 to prevent conjestion.
         Args:
-            port: The port to listen on.
-            msg: The message to send back to the sender.
+            message: The message to send back to the sender.
         Returns:
             True if a message was received, False otherwise.
         '''

@@ -55,10 +55,6 @@ class MultiplayerGame:
         '''
         Send a message to the peer.
         '''
-        # if self._connection.is_connected():
-        #     dlogger.log_info('Client still connected. Sending message...')
-        # else:
-        #     dlogger.log_info('Client disconnected. Expect a crash.')
 
         if not self._host:
             self._connection.dynamic_send(msg)
@@ -70,10 +66,6 @@ class MultiplayerGame:
         '''
         Receive a message from the peer.
         '''
-        # if self._connection.is_connected():
-        #     dlogger.log_info('Client still connected. Receiving message...')
-        # else:
-        #     dlogger.log_info('Client disconnected. Expect a crash.')
 
         if not self._host:
             while not self._connection.dynamic_receive():

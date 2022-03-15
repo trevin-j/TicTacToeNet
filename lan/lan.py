@@ -1,18 +1,15 @@
 import socket
 
-from debug.dlogger import dLog
 from globals import dlogger
-
 from lan.connection import Connection
 
 def check_lan_servers(port: int) -> tuple:
     '''
     Checks for LAN servers on the specified port.
     Any servers on LAN will respond with their IP address and any other data sent by the server will be returned as well.
-    WARNING: Current implementation of this function WILL delay the program.
+    WARNING: Current implementation of this function is single threaded.
     Do NOT use in a part of the application where looping must be fast.
-    It is solely intended to be used when in some sort of menu.
-    A received message will come from port + 1 to reduce conjestion.
+    A received message will come from port + 1.
     Args:
         port: The port to check for servers.
     Returns:
@@ -27,15 +24,12 @@ def check_lan_servers(port: int) -> tuple:
     # Set the option to allow broadcast
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-    # Bind to the port
-    # sock.bind(('', port))
-
     # Create new socket for receiving message on port + 1
     sock_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock_recv.bind(('', port + 1))
 
     # Broadcast UDP packets 3 times with a delay of 1 second between each
-    for i in range(3):
+    for _ in range(3):
         sock.sendto(b'PYMULT_BROADCAST', ('255.255.255.255', port))
 
     # Wait for 1 seconds for a response
