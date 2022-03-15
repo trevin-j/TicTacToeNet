@@ -1,6 +1,5 @@
 import socket
 
-from debug.dlogger import dLog
 from globals import dlogger
 
 SPECIAL_CASE_MSGS = ['!CON!']
@@ -15,27 +14,15 @@ The main protocol for communications is TCP, however UDP is used to find LAN gam
 
 class Connection:
 
-    def __init__(self, ip=None, port=None, socket=None, save_sent_msgs=False):
+    def __init__(self, ip=None, port=None, socket=None):
         self._ip = ip
         self._port = port
         self._socket = socket
         self._msgs = []
         self._recvd_msgs = []
-        self._save_sent_msgs = save_sent_msgs
-        self._saved_smsgs = []
-        self._username = ''
-
-    def set_username(self, username):
-        self._username = username
-
-    def get_username(self):
-        return self._username
 
     def add_message(self, message):
         self._msgs.append(message)
-
-    def get_messages(self):
-        return self._msgs
 
     def tcp_connect(self):
         '''
@@ -52,6 +39,7 @@ class Connection:
                 self._socket = None
         else:
             dlogger.log_warning('A socket already exists for this Connection object.')
+
 
     # Methods for receiving TCP messages
 
@@ -88,28 +76,7 @@ class Connection:
                 return False
         else:
             dlogger.log_error('No socket exists for this Connection object.')
-            return False
-
-    # def receive_nonspecial_tcp(self, bytes: int) -> bool:   # TODO: modify this
-    #     '''
-    #     Receive bytes from the open tcp socket. Discards it if it is a special case such as '!CONNECTION_CHECK!'
-    #     Args:
-    #         bytes: the number of bytes to receive.
-    #     Returns:
-    #         True if the message was received, False if not.
-    #     '''
-    #     while True:
-    #         got_response = self.receive_tcp(bytes)
-    #         if not got_response:
-    #             return False
-    #         response = self._recvd_msgs[-1]
-    #         if response not in SPECIAL_CASE_MSGS:
-    #             return True
-    #         else:
-    #             self._recvd_msgs.pop()
-        
-
-    
+            return False    
         
 
     def receive_tcp_all(self):
@@ -128,10 +95,6 @@ class Connection:
     def clear_recvd_messages(self):
         self._recvd_msgs = []
 
-    def remove_first_recvd_message(self):
-        return self._recvd_msgs.pop(0)
-
-
     # Methods for sending
     def send_tcp(self, message: str):
         '''
@@ -142,26 +105,12 @@ class Connection:
             True if the message was sent, False if not.
         '''
         if self._socket is not None:
-            # try:
             dlogger.log_info(f'Attempting to send {message} to TCP socket {self._ip} at port {self._port}...')
             self._socket.sendall(message.encode('utf-8'))
-            if self._save_sent_msgs:
-                self._saved_smsgs.append(message)
             return True
-            # except Exception as e:
-            #     dlogger.log_error(f'Error sending {message} to TCP socket {self._ip} at port {self._port}.')
-            #     dlogger.log_error(str(e))
-            #     return False
         else:
             dlogger.log_error('No socket exists for this Connection object.')
             return False
-
-    def get_saved_sent_messages(self):
-        return self._saved_smsgs
-
-    def clear_saved_sent_messages(self):
-        self._saved_smsgs = []
-
 
     def settimeout(self, timeout: int):
         '''
@@ -229,39 +178,3 @@ class Connection:
 
     def close_socket(self):
         self._socket.close()
-
-
-    
-    # Static methods
-
-    def is_connected(self):
-        '''
-        Check if the socket is connected.
-        Returns:
-            True if the socket is connected, False if not.
-        '''
-        dlogger.log_debug(f'Checking if TCP socket {self._ip} at port {self._port} is connected...')
-        try:
-            self.dynamic_send('!CON!')
-            return True
-        except Exception as e:
-            dlogger.log_debug('Socket is not connected. ' + str(e))
-            return False
-
-    def get_ip(self):
-        return self._ip
-
-    def get_port(self):
-        return self._port
-
-
-    @staticmethod
-    def interrupted_server():
-        '''
-        Return a Connection object with no real IP address.
-        This is used when a server is interrupted by another server.
-        As a way for the program to know that the server connection was interrupted.
-        '''
-        interrupted_connection = Connection()
-        interrupted_connection._ip = 'interrupted'
-        return interrupted_connection

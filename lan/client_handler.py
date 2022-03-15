@@ -1,11 +1,8 @@
 # Global packages/builtins
 import socket
 
-# Modules from same directory as main script
-from debug.dlogger import dLog
+# Package modules
 from globals import dlogger
-
-# Modules relative to this file
 from lan.connection import Connection
 
 
@@ -57,8 +54,6 @@ class ClientHandler(Connection):
         Receive all messages from all clients.
         Stores all messages in a list attribute.
         Retrieve the messages by calling the get_msgs() method.
-        Args:
-            bytes: the number of bytes to receive from each message.
         Returns:
             bool: True if a message was received, False otherwise.
         """
@@ -89,19 +84,3 @@ class ClientHandler(Connection):
         Return True if there are clients connected, False otherwise.
         """
         return len(self._clients) > 0
-
-    def update_client_list(self):
-        '''
-        Updates the list of clients based on if they are still connected.
-        '''
-        dlogger.log_debug(f'Updating client list.')
-        for client in self._clients:
-            if not client.is_connected():
-                dlogger.log_info(f'Client {client.get_ip()}:{client.get_port()} has disconnected.')
-                self._clients.remove(client)
-
-    def get_clients(self):
-        """
-        Return the list of clients.
-        """
-        return self._clients
